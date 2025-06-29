@@ -134,7 +134,7 @@
             {
               "key": "nextCursor",
               "value": "TOKEN_ADDRESS_HERE",
-              "description": "Replace with actual token address from previous response"
+              "description": "Use token address from previous response's nextCursor field"
             }
           ]
         },

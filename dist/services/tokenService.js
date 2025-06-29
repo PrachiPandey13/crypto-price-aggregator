@@ -20,6 +20,7 @@ const redisClient_1 = require("../cache/redisClient");
 const memoryCache_1 = require("../cache/memoryCache");
 const mergeTokens_1 = require("../utils/mergeTokens");
 const metricsController_1 = require("../controllers/metricsController");
+const filterSortPaginate_1 = require("../utils/filterSortPaginate");
 // Helper function to generate random jitter delay
 function getJitterDelay(maxJitterMs = 1000) {
     return Math.floor(Math.random() * maxJitterMs);
@@ -118,8 +119,12 @@ function fetchAndAggregateTokens(params_1) {
             warnings.push('GeckoTerminal API is currently unavailable');
         }
         const merged = (0, mergeTokens_1.mergeTokens)(allTokens);
-        // TODO: filter, sort, paginate based on params
-        const result = Object.assign({ tokens: merged }, (warnings.length > 0 && { warning: warnings.join('; ') }));
+        // Apply filtering, sorting, and pagination
+        const result = (0, filterSortPaginate_1.filterSortPaginate)(merged, params);
+        // Add warnings if any
+        if (warnings.length > 0) {
+            result.warning = warnings.join('; ');
+        }
         // Store in both Redis and Memory cache
         yield (0, redisClient_1.setTokenCache)(cacheKey, JSON.stringify(result), cacheTTL);
         memoryCache_1.memoryCache.set(cacheKey, result, 5);

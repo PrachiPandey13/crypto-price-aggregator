@@ -1,6 +1,7 @@
 import { Server } from 'http';
 import { SocketServer } from '../src/websocket/socketServer';
 import express from 'express';
+import io from 'socket.io-client';
 
 describe('WebSocket heartbeat system', () => {
   let httpServer: Server;
@@ -140,7 +141,6 @@ describe('WebSocket heartbeat system', () => {
 
     // Verify cleanup
     stats = socketServer.getHeartbeatStats();
-    // Note: This test might need adjustment based on actual implementation
     // The disconnect handler should remove the client from tracking
   });
 
@@ -153,4 +153,22 @@ describe('WebSocket heartbeat system', () => {
     
     expect(typeof subscriptionStats.responsiveClients).toBe('number');
   });
+
+  it('should handle client disconnection during heartbeat', async () => {
+    const client = io('http://localhost:5000');
+    
+    await new Promise(resolve => client.on('connect', resolve));
+    
+    // Simulate client disconnection
+    client.disconnect();
+    
+    // Wait for heartbeat cycle
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Verify client is no longer tracked
+    const stats = socketServer.getHeartbeatStats();
+    expect(stats.totalClients).toBe(0);
+    
+    client.close();
+  }, 10000);
 }); 
