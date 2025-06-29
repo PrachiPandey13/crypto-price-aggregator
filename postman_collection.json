@@ -1,0 +1,182 @@
+{
+  "info": {
+    "name": "Real-Time Data Aggregation Service",
+    "description": "API collection for token data aggregation with WebSocket support",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Tokens - Default",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/tokens",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "tokens"]
+        },
+        "description": "Get tokens with default parameters (24h, volume sort, limit 20)"
+      }
+    },
+    {
+      "name": "Get Tokens - 1 Hour",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/tokens?time=1h&sort=volume&limit=10",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "tokens"],
+          "query": [
+            {
+              "key": "time",
+              "value": "1h"
+            },
+            {
+              "key": "sort",
+              "value": "volume"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "description": "Get tokens for 1 hour period, sorted by volume, limit 10"
+      }
+    },
+    {
+      "name": "Get Tokens - 7 Days Price Change",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/tokens?time=7d&sort=priceChange&limit=25",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "tokens"],
+          "query": [
+            {
+              "key": "time",
+              "value": "7d"
+            },
+            {
+              "key": "sort",
+              "value": "priceChange"
+            },
+            {
+              "key": "limit",
+              "value": "25"
+            }
+          ]
+        },
+        "description": "Get tokens for 7 days period, sorted by price change, limit 25"
+      }
+    },
+    {
+      "name": "Get Tokens - Market Cap Sort",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/tokens?time=24h&sort=marketCap&limit=50",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "tokens"],
+          "query": [
+            {
+              "key": "time",
+              "value": "24h"
+            },
+            {
+              "key": "sort",
+              "value": "marketCap"
+            },
+            {
+              "key": "limit",
+              "value": "50"
+            }
+          ]
+        },
+        "description": "Get tokens for 24 hours, sorted by market cap, limit 50"
+      }
+    },
+    {
+      "name": "Get Tokens - With Pagination",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/tokens?time=24h&sort=volume&limit=10&nextCursor=TOKEN_ADDRESS_HERE",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "tokens"],
+          "query": [
+            {
+              "key": "time",
+              "value": "24h"
+            },
+            {
+              "key": "sort",
+              "value": "volume"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "nextCursor",
+              "value": "TOKEN_ADDRESS_HERE",
+              "description": "Replace with actual token address from previous response"
+            }
+          ]
+        },
+        "description": "Get next page of tokens using cursor-based pagination"
+      }
+    },
+    {
+      "name": "Get System Metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/metrics",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "metrics"]
+        },
+        "description": "Get system metrics including API response times, cache hit rates, and WebSocket client statistics"
+      }
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [""]
+        },
+        "description": "Health check endpoint"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ]
+} 
