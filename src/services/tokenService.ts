@@ -3,6 +3,7 @@ import redis, { setTokenCache, getTokenCache } from '../cache/redisClient';
 import { memoryCache } from '../cache/memoryCache';
 import { mergeTokens } from '../utils/mergeTokens';
 import { recordCacheHit, recordCacheMiss } from '../controllers/metricsController';
+import { filterSortPaginate } from '../utils/filterSortPaginate';
 
 // Helper function to generate random jitter delay
 function getJitterDelay(maxJitterMs: number = 1000): number {
@@ -109,11 +110,13 @@ export async function fetchAndAggregateTokens(params: any, cacheTTL: number = 30
 
   const merged = mergeTokens(allTokens);
 
-  // TODO: filter, sort, paginate based on params
-  const result = { 
-    tokens: merged,
-    ...(warnings.length > 0 && { warning: warnings.join('; ') })
-  };
+  // Apply filtering, sorting, and pagination
+  const result = filterSortPaginate(merged, params);
+  
+  // Add warnings if any
+  if (warnings.length > 0) {
+    (result as any).warning = warnings.join('; ');
+  }
 
   // Store in both Redis and Memory cache
   await setTokenCache(cacheKey, JSON.stringify(result), cacheTTL);

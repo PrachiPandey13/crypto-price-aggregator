@@ -16,7 +16,6 @@ function getPriceChangeField(time) {
     }
 }
 function getMarketCapField(time) {
-    // Assume market cap is static or use a field if available
     return 'market_cap';
 }
 function parseSortParameter(sortParam, time) {
@@ -38,7 +37,6 @@ function parseSortParameter(sortParam, time) {
                 field = getMarketCapField(time);
                 break;
             default:
-                // Handle unknown fields gracefully
                 field = fieldName;
         }
         sortFields.push({ field, direction });
@@ -54,16 +52,12 @@ function applyMultiFieldSort(tokens, sortFields) {
                 return direction === 'asc' ? aValue - bValue : bValue - aValue;
             }
         }
-        return 0; // If all fields are equal, maintain original order
+        return 0;
     });
 }
 function filterSortPaginate(tokens, params) {
-    // Filter: (Assume all tokens are valid for the period, or filter by updatedAt if needed)
-    // For now, no additional filtering by time
-    // Parse and apply multi-field sorting
     const sortFields = parseSortParameter(params.sort, params.time);
     const sorted = applyMultiFieldSort([...tokens], sortFields);
-    // Pagination (cursor-based)
     let startIdx = 0;
     if (params.nextCursor) {
         const idx = sorted.findIndex(t => t.address === params.nextCursor);
