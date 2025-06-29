@@ -1,7 +1,7 @@
-import express from 'express';
-import cors from 'cors';
-import tokenRoutes from './routes/tokenRoutes';
-import metricsRoutes from './routes/metricsRoutes';
+const express = require('express');
+const cors = require('cors');
+const tokenRoutes = require('./routes/tokenRoutes');
+const metricsRoutes = require('./routes/metricsRoutes');
 
 const app = express();
 
@@ -14,4 +14,4 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Server is healthy!' });
 });
 
-export default app; 
+module.exports = app; 

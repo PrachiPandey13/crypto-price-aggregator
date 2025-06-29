@@ -1,20 +1,21 @@
-import axios from 'axios';
-import redis, { setTokenCache, getTokenCache } from '../cache/redisClient';
-import { memoryCache } from '../cache/memoryCache';
-import { mergeTokens } from '../utils/mergeTokens';
-import { recordCacheHit, recordCacheMiss } from '../controllers/metricsController';
-import { filterSortPaginate } from '../utils/filterSortPaginate';
+const axios = require('axios');
+// const redis = require('../cache/redisClient'); // Redis disabled
+// const { setTokenCache, getTokenCache } = require('../cache/redisClient'); // Redis disabled
+const { memoryCache } = require('../cache/memoryCache');
+const { mergeTokens } = require('../utils/mergeTokens');
+const { recordCacheHit, recordCacheMiss } = require('../controllers/metricsController');
+const { filterSortPaginate } = require('../utils/filterSortPaginate');
 
-function getJitterDelay(maxJitterMs: number = 1000): number {
+function getJitterDelay(maxJitterMs = 1000) {
   return Math.floor(Math.random() * maxJitterMs);
 }
 
-async function exponentialBackoffRequest(url: string, apiName: string, options: any = {}, maxRetries = 5, baseDelay = 500, maxJitterMs = 1000): Promise<any> {
+async function exponentialBackoffRequest(url, apiName, options = {}, maxRetries = 5, baseDelay = 500, maxJitterMs = 1000) {
   let attempt = 0;
   while (attempt <= maxRetries) {
     try {
       return await axios.get(url, options);
-    } catch (error: any) {
+    } catch (error) {
       if (error.response && error.response.status === 429 && attempt < maxRetries) {
         const exponentialDelay = baseDelay * Math.pow(2, attempt);
         const jitterDelay = getJitterDelay(maxJitterMs);
@@ -30,23 +31,23 @@ async function exponentialBackoffRequest(url: string, apiName: string, options: 
   }
 }
 
-export async function fetchFromDexScreener(query: string) {
+async function fetchFromDexScreener(query) {
   const url = `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`;
   const response = await exponentialBackoffRequest(url, 'DexScreener');
   return response.data;
 }
 
-export async function fetchFromGeckoTerminal() {
+async function fetchFromGeckoTerminal() {
   const url = 'https://api.geckoterminal.com/api/v2/tokens/info_recently_updated';
   const response = await exponentialBackoffRequest(url, 'GeckoTerminal');
   return response.data;
 }
 
-function getCacheKey(params: any) {
+function getCacheKey(params) {
   return `tokens:${params.time || '24h'}:${params.sort || 'volume'}:${params.limit || 20}:${params.nextCursor || ''}`;
 }
 
-export async function fetchAndAggregateTokens(params: any, cacheTTL: number = 30) {
+async function fetchAndAggregateTokens(params, cacheTTL = 30) {
   const cacheKey = getCacheKey(params);
 
   const memoryCached = memoryCache.get(cacheKey);
@@ -56,20 +57,21 @@ export async function fetchAndAggregateTokens(params: any, cacheTTL: number = 30
     return memoryCached;
   }
 
-  const redisCached = await getTokenCache(cacheKey);
-  if (redisCached) {
-    const parsedData = JSON.parse(redisCached);
-    memoryCache.set(cacheKey, parsedData, 5);
-    console.log(`Redis Cache HIT for key: ${cacheKey}`);
-    recordCacheHit();
-    return parsedData;
-  }
+  // Redis Cache Check - disabled
+  // const redisCached = await getTokenCache(cacheKey);
+  // if (redisCached) {
+  //   const parsedData = JSON.parse(redisCached);
+  //   memoryCache.set(cacheKey, parsedData, 5);
+  //   console.log(`Redis Cache HIT for key: ${cacheKey}`);
+  //   recordCacheHit();
+  //   return parsedData;
+  // }
 
   console.log(`DEX Fetch for key: ${cacheKey}`);
   recordCacheMiss();
 
-  const warnings: string[] = [];
-  const allTokens: any[] = [];
+  const warnings = [];
+  const allTokens = [];
 
   try {
     const dexData = await fetchFromDexScreener('solana');
@@ -84,7 +86,7 @@ export async function fetchAndAggregateTokens(params: any, cacheTTL: number = 30
   try {
     const geckoData = await fetchFromGeckoTerminal();
     if (geckoData.data) {
-      const normalizedTokens = geckoData.data.map((t: any) => ({
+      const normalizedTokens = geckoData.data.map((t) => ({
         address: t.id,
         price: Number(t.attributes?.price_usd) || 0,
         liquidity: Number(t.attributes?.liquidity_usd) || 0,
@@ -103,11 +105,18 @@ export async function fetchAndAggregateTokens(params: any, cacheTTL: number = 30
   const result = filterSortPaginate(merged, params);
 
   if (warnings.length > 0) {
-    (result as any).warning = warnings.join('; ');
+    result.warning = warnings.join('; ');
   }
 
-  await setTokenCache(cacheKey, JSON.stringify(result), cacheTTL);
+  // Store in Memory cache only (Redis disabled)
+  // await setTokenCache(cacheKey, JSON.stringify(result), cacheTTL);
   memoryCache.set(cacheKey, result, 5);
 
   return result;
 }
+
+module.exports = {
+  fetchFromDexScreener,
+  fetchFromGeckoTerminal,
+  fetchAndAggregateTokens
+}; 

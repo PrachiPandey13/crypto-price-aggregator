@@ -42,19 +42,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const tokenService = __importStar(require("../src/services/tokenService"));
-const tokenController = __importStar(require("../src/controllers/tokenController"));
+const tokenService = require('../src/services/tokenService');
+const tokenController = require('../src/controllers/tokenController');
+
 describe('tokenController error handling', () => {
-    it('returns 500 on service error', () => __awaiter(void 0, void 0, void 0, function* () {
-        jest.spyOn(tokenService, 'fetchAndAggregateTokens').mockRejectedValueOnce(new Error('API failed'));
-        const req = { query: {} };
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-        yield tokenController.getTokens(req, res);
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Failed to fetch tokens' }));
-    }));
+  it('returns 500 on service error', async () => {
+    jest.spyOn(tokenService, 'fetchAndAggregateTokens').mockRejectedValueOnce(new Error('API failed'));
+    const req = { query: {} };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    await tokenController.getTokens(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Failed to fetch tokens' }));
+  });
 });
 //# sourceMappingURL=errorHandling.test.js.map

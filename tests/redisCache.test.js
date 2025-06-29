@@ -9,22 +9,54 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const redisClient_1 = require("../src/cache/redisClient");
+// const { setTokenCache, getTokenCache } = require('../src/cache/redisClient'); // Redis disabled
+const { setTokenCache, getTokenCache } = require('../src/cache/redisClient');
+
 describe('Redis cache', () => {
-    it('sets and gets token cache', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('sets and gets token cache', async () => {
         const key = 'test:token';
         const value = JSON.stringify({ foo: 'bar' });
-        yield (0, redisClient_1.setTokenCache)(key, value, 2); // 2 seconds TTL
-        const cached = yield (0, redisClient_1.getTokenCache)(key);
+        await setTokenCache(key, value, 2); // 2 seconds TTL
+        const cached = await getTokenCache(key);
         expect(cached).toBe(value);
-    }));
-    it('expires cache after TTL', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+
+    it('expires cache after TTL', async () => {
         const key = 'test:expire';
         const value = 'baz';
-        yield (0, redisClient_1.setTokenCache)(key, value, 1); // 1 second TTL
-        yield new Promise(res => setTimeout(res, 1200));
-        const cached = yield (0, redisClient_1.getTokenCache)(key);
+        await setTokenCache(key, value, 1); // 1 second TTL
+        await new Promise(res => setTimeout(res, 1200));
+        const cached = await getTokenCache(key);
         expect(cached).toBeNull();
-    }));
+    });
+});
+
+describe('Redis cache (disabled)', () => {
+    it('should return null for getTokenCache when Redis is disabled', async () => {
+        const result = await getTokenCache('test-key');
+        expect(result).toBeNull();
+    });
+
+    it('should not throw error for setTokenCache when Redis is disabled', async () => {
+        expect(async () => {
+            await setTokenCache('test-key', 'test-value', 30);
+        }).not.toThrow();
+    });
+
+    it('should log that Redis is disabled', async () => {
+        const logMessages = [];
+        const originalLog = console.log;
+        console.log = (...args) => {
+            logMessages.push(args.join(' '));
+        };
+
+        await getTokenCache('test-key');
+        await setTokenCache('test-key', 'test-value', 30);
+
+        expect(logMessages).toContain('Redis disabled - getTokenCache called for key: test-key (returning null)');
+        expect(logMessages).toContain('Redis disabled - setTokenCache called for key: test-key (no-op)');
+
+        console.log = originalLog;
+    });
 });
 //# sourceMappingURL=redisCache.test.js.map

@@ -21,7 +21,6 @@ const memoryCache_1 = require("../cache/memoryCache");
 const mergeTokens_1 = require("../utils/mergeTokens");
 const metricsController_1 = require("../controllers/metricsController");
 const filterSortPaginate_1 = require("../utils/filterSortPaginate");
-// Helper function to generate random jitter delay
 function getJitterDelay(maxJitterMs = 1000) {
     return Math.floor(Math.random() * maxJitterMs);
 }
@@ -34,7 +33,6 @@ function exponentialBackoffRequest(url_1, apiName_1) {
             }
             catch (error) {
                 if (error.response && error.response.status === 429 && attempt < maxRetries) {
-                    // Calculate exponential backoff with jitter
                     const exponentialDelay = baseDelay * Math.pow(2, attempt);
                     const jitterDelay = getJitterDelay(maxJitterMs);
                     const totalDelay = exponentialDelay + jitterDelay;
@@ -58,41 +56,35 @@ function fetchFromDexScreener(query) {
 }
 function fetchFromGeckoTerminal() {
     return __awaiter(this, void 0, void 0, function* () {
-        const url = 'https://api.geckoterminal.com/api/v2/networks/solana/tokens';
+        const url = 'https://api.geckoterminal.com/api/v2/tokens/info_recently_updated';
         const response = yield exponentialBackoffRequest(url, 'GeckoTerminal');
         return response.data;
     });
 }
-// Helper to generate a cache key based on params
 function getCacheKey(params) {
     return `tokens:${params.time || '24h'}:${params.sort || 'volume'}:${params.limit || 20}:${params.nextCursor || ''}`;
 }
 function fetchAndAggregateTokens(params_1) {
     return __awaiter(this, arguments, void 0, function* (params, cacheTTL = 30) {
         const cacheKey = getCacheKey(params);
-        // Layer 1: Check Memory Cache (5 seconds TTL)
         const memoryCached = memoryCache_1.memoryCache.get(cacheKey);
         if (memoryCached) {
             console.log(`Memory Cache HIT for key: ${cacheKey}`);
             (0, metricsController_1.recordCacheHit)();
             return memoryCached;
         }
-        // Layer 2: Check Redis Cache
         const redisCached = yield (0, redisClient_1.getTokenCache)(cacheKey);
         if (redisCached) {
             const parsedData = JSON.parse(redisCached);
-            // Store in memory cache for faster subsequent access
             memoryCache_1.memoryCache.set(cacheKey, parsedData, 5);
             console.log(`Redis Cache HIT for key: ${cacheKey}`);
             (0, metricsController_1.recordCacheHit)();
             return parsedData;
         }
-        // Layer 3: Fetch from DEX APIs
         console.log(`DEX Fetch for key: ${cacheKey}`);
         (0, metricsController_1.recordCacheMiss)();
         const warnings = [];
         const allTokens = [];
-        // Fetch from DexScreener with error handling
         try {
             const dexData = yield fetchFromDexScreener('solana');
             if (dexData.tokens) {
@@ -103,7 +95,6 @@ function fetchAndAggregateTokens(params_1) {
             console.error('DexScreener API failed:', error);
             warnings.push('DexScreener API is currently unavailable');
         }
-        // Fetch from GeckoTerminal with error handling
         try {
             const geckoData = yield fetchFromGeckoTerminal();
             if (geckoData.data) {
@@ -119,16 +110,12 @@ function fetchAndAggregateTokens(params_1) {
             warnings.push('GeckoTerminal API is currently unavailable');
         }
         const merged = (0, mergeTokens_1.mergeTokens)(allTokens);
-        // Apply filtering, sorting, and pagination
         const result = (0, filterSortPaginate_1.filterSortPaginate)(merged, params);
-        // Add warnings if any
         if (warnings.length > 0) {
             result.warning = warnings.join('; ');
         }
-        // Store in both Redis and Memory cache
         yield (0, redisClient_1.setTokenCache)(cacheKey, JSON.stringify(result), cacheTTL);
         memoryCache_1.memoryCache.set(cacheKey, result, 5);
         return result;
     });
 }
-//# sourceMappingURL=tokenService.js.map

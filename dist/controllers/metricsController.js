@@ -95,4 +95,3 @@ function getMetricsEndpoint(req, res) {
         }
     });
 }
-//# sourceMappingURL=metricsController.js.map

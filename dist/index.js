@@ -16,4 +16,3 @@ app_1.default.socketServer = socketServer;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-//# sourceMappingURL=index.js.map

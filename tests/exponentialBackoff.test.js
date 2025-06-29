@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
-const tokenService_1 = require("../src/services/tokenService");
+const axios = require('axios');
+const { fetchFromDexScreener, fetchFromGeckoTerminal } = require('../src/services/tokenService');
 // Mock axios
 jest.mock('axios');
-const mockedAxios = axios_1.default;
+const mockedAxios = axios;
 describe('Exponential Backoff with Jitter', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -32,7 +32,7 @@ describe('Exponential Backoff with Jitter', () => {
             .mockRejectedValueOnce({ response: { status: 429 } })
             .mockResolvedValueOnce({ data: { tokens: [] } });
         const startTime = Date.now();
-        const result = yield (0, tokenService_1.fetchFromDexScreener)('solana');
+        const result = yield fetchFromDexScreener('solana');
         const endTime = Date.now();
         expect(mockedAxios.get).toHaveBeenCalledTimes(3);
         expect(result).toEqual({ tokens: [] });
@@ -42,7 +42,7 @@ describe('Exponential Backoff with Jitter', () => {
     it('should not retry on non-429 errors', () => __awaiter(void 0, void 0, void 0, function* () {
         // Mock axios to fail with 500 error
         mockedAxios.get.mockRejectedValueOnce({ response: { status: 500 } });
-        yield expect((0, tokenService_1.fetchFromDexScreener)('solana')).rejects.toEqual({ response: { status: 500 } });
+        yield expect(fetchFromDexScreener('solana')).rejects.toEqual({ response: { status: 500 } });
         expect(mockedAxios.get).toHaveBeenCalledTimes(1);
     }), 5000);
     it('should stop retrying after max attempts', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -50,7 +50,7 @@ describe('Exponential Backoff with Jitter', () => {
         mockedAxios.get.mockRejectedValue({ response: { status: 429 } });
         const startTime = Date.now();
         // Start the request and wait for it to complete (will take time due to retries)
-        yield expect((0, tokenService_1.fetchFromDexScreener)('solana')).rejects.toEqual({ response: { status: 429 } });
+        yield expect(fetchFromDexScreener('solana')).rejects.toEqual({ response: { status: 429 } });
         const endTime = Date.now();
         // Should have made 6 attempts (1 initial + 5 retries)
         expect(mockedAxios.get).toHaveBeenCalledTimes(6);
@@ -62,7 +62,7 @@ describe('Exponential Backoff with Jitter', () => {
             .mockRejectedValueOnce({ response: { status: 429 } })
             .mockResolvedValueOnce({ data: { tokens: [] } });
         const startTime = Date.now();
-        const result = yield (0, tokenService_1.fetchFromDexScreener)('solana');
+        const result = yield fetchFromDexScreener('solana');
         const endTime = Date.now();
         expect(mockedAxios.get).toHaveBeenCalledTimes(2);
         expect(result).toEqual({ tokens: [] });
@@ -77,7 +77,7 @@ describe('Exponential Backoff with Jitter', () => {
             .mockRejectedValueOnce({ response: { status: 429 } })
             .mockResolvedValueOnce({ data: { data: [] } });
         const startTime = Date.now();
-        const result = yield (0, tokenService_1.fetchFromGeckoTerminal)();
+        const result = yield fetchFromGeckoTerminal();
         const endTime = Date.now();
         expect(mockedAxios.get).toHaveBeenCalledTimes(2);
         expect(result).toEqual({ data: [] });
@@ -87,7 +87,7 @@ describe('Exponential Backoff with Jitter', () => {
     it('should handle network errors without retrying', () => __awaiter(void 0, void 0, void 0, function* () {
         // Mock axios to fail with network error
         mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
-        yield expect((0, tokenService_1.fetchFromDexScreener)('solana')).rejects.toThrow('Network error');
+        yield expect(fetchFromDexScreener('solana')).rejects.toThrow('Network error');
         expect(mockedAxios.get).toHaveBeenCalledTimes(1);
     }), 5000);
     it('should log detailed retry information', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -96,7 +96,7 @@ describe('Exponential Backoff with Jitter', () => {
         mockedAxios.get
             .mockRejectedValueOnce({ response: { status: 429 } })
             .mockResolvedValueOnce({ data: { tokens: [] } });
-        yield (0, tokenService_1.fetchFromDexScreener)('solana');
+        yield fetchFromDexScreener('solana');
         expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/Retrying DexScreener API - Attempt 1 after \d+ms \(base: 500ms, jitter: \d+ms\)/));
         consoleSpy.mockRestore();
     }), 10000);
@@ -107,7 +107,7 @@ describe('Exponential Backoff with Jitter', () => {
             .mockRejectedValueOnce({ response: { status: 429 } })
             .mockRejectedValueOnce({ response: { status: 429 } })
             .mockResolvedValueOnce({ data: { tokens: [] } });
-        yield (0, tokenService_1.fetchFromDexScreener)('solana');
+        yield fetchFromDexScreener('solana');
         const logCalls = consoleSpy.mock.calls.filter(call => call[0].toString().includes('Retrying DexScreener API'));
         // Should have 2 retry logs (for attempts 1 and 2)
         expect(logCalls.length).toBeGreaterThanOrEqual(1);

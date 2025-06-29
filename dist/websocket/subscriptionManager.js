@@ -57,4 +57,3 @@ class SubscriptionManager {
     }
 }
 exports.subscriptionManager = new SubscriptionManager();
-//# sourceMappingURL=subscriptionManager.js.map

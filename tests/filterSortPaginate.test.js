@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const filterSortPaginate_1 = require("../src/utils/filterSortPaginate");
+const { filterSortPaginate } = require('../src/utils/filterSortPaginate');
 describe('filterSortPaginate', () => {
     const tokens = [
         { address: 'a', price: 1, liquidity: 10, volume: 100, updatedAt: 1, volume_1h: 10, volume_24h: 100, volume_7d: 700, price_change_1h: 0.1, price_change_24h: 0.5, price_change_7d: 1, market_cap: 1000 },
@@ -9,31 +9,31 @@ describe('filterSortPaginate', () => {
     ];
     it('sorts by volume for 1h', () => {
         const params = { time: '1h', sort: 'volume', limit: 3 };
-        const { tokens: result } = (0, filterSortPaginate_1.filterSortPaginate)(tokens, params);
+        const { tokens: result } = filterSortPaginate(tokens, params);
         expect(result[0].address).toBe('c');
         expect(result[1].address).toBe('b');
         expect(result[2].address).toBe('a');
     });
     it('sorts by price change for 7d', () => {
         const params = { time: '7d', sort: 'priceChange', limit: 3 };
-        const { tokens: result } = (0, filterSortPaginate_1.filterSortPaginate)(tokens, params);
+        const { tokens: result } = filterSortPaginate(tokens, params);
         expect(result[0].address).toBe('c');
         expect(result[1].address).toBe('b');
         expect(result[2].address).toBe('a');
     });
     it('sorts by market cap', () => {
         const params = { time: '24h', sort: 'marketCap', limit: 3 };
-        const { tokens: result } = (0, filterSortPaginate_1.filterSortPaginate)(tokens, params);
+        const { tokens: result } = filterSortPaginate(tokens, params);
         expect(result[0].address).toBe('c');
         expect(result[1].address).toBe('b');
         expect(result[2].address).toBe('a');
     });
     it('paginates with nextCursor', () => {
         const params = { time: '24h', sort: 'marketCap', limit: 2 };
-        const { tokens: page1, nextCursor } = (0, filterSortPaginate_1.filterSortPaginate)(tokens, params);
+        const { tokens: page1, nextCursor } = filterSortPaginate(tokens, params);
         expect(page1.length).toBe(2);
         expect(nextCursor).toBe('b');
-        const { tokens: page2 } = (0, filterSortPaginate_1.filterSortPaginate)(tokens, Object.assign(Object.assign({}, params), { nextCursor }));
+        const { tokens: page2 } = filterSortPaginate(tokens, { ...params, nextCursor });
         expect(page2.length).toBe(1);
         expect(page2[0].address).toBe('a');
     });

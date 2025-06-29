@@ -6,4 +6,3 @@ router.get('/api/tokens', (req, res) => {
     res.json({ message: 'Token data endpoint' });
 });
 exports.default = router;
-//# sourceMappingURL=tokenRoutes.js.map

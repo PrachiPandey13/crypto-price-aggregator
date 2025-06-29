@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const mergeTokens_1 = require("../src/utils/mergeTokens");
+const { mergeTokens } = require('../src/utils/mergeTokens');
 // Mock console.log to capture log messages
 const originalConsoleLog = console.log;
 let logMessages = [];
@@ -36,7 +36,7 @@ describe('Token merging logs', () => {
                 updatedAt: 2000
             }
         ];
-        const merged = (0, mergeTokens_1.mergeTokens)(tokens);
+        const merged = mergeTokens(tokens);
         expect(merged).toHaveLength(1);
         expect(logMessages).toContain('Merging duplicate token: PIPE from DexScreener and GeckoTerminal with combined volume.');
     });
@@ -59,7 +59,7 @@ describe('Token merging logs', () => {
                 updatedAt: 2500
             }
         ];
-        const merged = (0, mergeTokens_1.mergeTokens)(tokens);
+        const merged = mergeTokens(tokens);
         expect(merged).toHaveLength(1);
         expect(logMessages).toContain('Merging duplicate token: 0x456 from DexScreener and GeckoTerminal with combined volume.');
     });
@@ -84,7 +84,7 @@ describe('Token merging logs', () => {
                 updatedAt: 2000
             }
         ];
-        const merged = (0, mergeTokens_1.mergeTokens)(tokens);
+        const merged = mergeTokens(tokens);
         expect(merged).toHaveLength(2);
         expect(logMessages).not.toContain('Merging duplicate token');
     });

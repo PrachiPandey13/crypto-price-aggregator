@@ -12,10 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
-const tokenService_1 = require("../src/services/tokenService");
+const axios = require('axios');
+const { fetchAndAggregateTokens } = require('../src/services/tokenService');
 jest.mock('axios');
-const mockedAxios = axios_1.default;
+const mockedAxios = axios;
 describe('Partial results when DEX fails', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -39,7 +39,7 @@ describe('Partial results when DEX fails', () => {
                 ]
             }
         });
-        const result = yield (0, tokenService_1.fetchAndAggregateTokens)({
+        const result = yield fetchAndAggregateTokens({
             time: '24h',
             sort: 'volume',
             limit: 20
@@ -65,7 +65,7 @@ describe('Partial results when DEX fails', () => {
         });
         // Mock GeckoTerminal to fail
         mockedAxios.get.mockRejectedValueOnce(new Error('GeckoTerminal API error'));
-        const result = yield (0, tokenService_1.fetchAndAggregateTokens)({
+        const result = yield fetchAndAggregateTokens({
             time: '24h',
             sort: 'volume',
             limit: 20
@@ -77,7 +77,7 @@ describe('Partial results when DEX fails', () => {
     it('returns empty result with warnings when both APIs fail', () => __awaiter(void 0, void 0, void 0, function* () {
         // Mock both APIs to fail
         mockedAxios.get.mockRejectedValue(new Error('API error'));
-        const result = yield (0, tokenService_1.fetchAndAggregateTokens)({
+        const result = yield fetchAndAggregateTokens({
             time: '24h',
             sort: 'volume',
             limit: 20

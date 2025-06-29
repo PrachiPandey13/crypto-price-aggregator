@@ -12,25 +12,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const supertest_1 = __importDefault(require("supertest"));
-const http_1 = require("http");
-const app_1 = __importDefault(require("../src/app"));
-const socketServer_1 = require("../src/websocket/socketServer");
-const metricsController_1 = require("../src/controllers/metricsController");
-const server = (0, http_1.createServer)(app_1.default);
-const socketServer = new socketServer_1.SocketServer(server);
-app_1.default.socketServer = socketServer;
+const request = require('supertest');
+const { createServer } = require('http');
+const app = require('../src/app');
+const { SocketServer } = require('../src/websocket/socketServer');
+const { recordApiResponseTime, recordCacheHit, recordCacheMiss, getMetrics } = require('../src/controllers/metricsController');
+const server = createServer(app);
+const socketServer = new SocketServer(server);
+app.socketServer = socketServer;
 describe('GET /api/metrics', () => {
     beforeEach(() => {
         // Reset metrics before each test
-        (0, metricsController_1.recordCacheHit)();
-        (0, metricsController_1.recordCacheMiss)();
-        (0, metricsController_1.recordApiResponseTime)(100);
-        (0, metricsController_1.recordApiResponseTime)(200);
-        (0, metricsController_1.recordApiResponseTime)(300);
+        recordCacheHit();
+        recordCacheMiss();
+        recordApiResponseTime(100);
+        recordApiResponseTime(200);
+        recordApiResponseTime(300);
     });
     it('should return metrics with all required fields', () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app_1.default)
+        const response = yield request(app)
             .get('/api/metrics')
             .expect(200);
         expect(response.body).toHaveProperty('api');
@@ -67,10 +67,10 @@ describe('GET /api/metrics', () => {
     }));
     it('should calculate average response time correctly', () => __awaiter(void 0, void 0, void 0, function* () {
         // Add some test response times
-        (0, metricsController_1.recordApiResponseTime)(100);
-        (0, metricsController_1.recordApiResponseTime)(200);
-        (0, metricsController_1.recordApiResponseTime)(300);
-        const response = yield (0, supertest_1.default)(app_1.default)
+        recordApiResponseTime(100);
+        recordApiResponseTime(200);
+        recordApiResponseTime(300);
+        const response = yield request(app)
             .get('/api/metrics')
             .expect(200);
         // Average should be (100+200+300)/3 = 200
@@ -78,10 +78,10 @@ describe('GET /api/metrics', () => {
     }));
     it('should calculate cache hit rate correctly', () => __awaiter(void 0, void 0, void 0, function* () {
         // Reset by adding some hits and misses
-        (0, metricsController_1.recordCacheHit)();
-        (0, metricsController_1.recordCacheHit)();
-        (0, metricsController_1.recordCacheMiss)();
-        const response = yield (0, supertest_1.default)(app_1.default)
+        recordCacheHit();
+        recordCacheHit();
+        recordCacheMiss();
+        const response = yield request(app)
             .get('/api/metrics')
             .expect(200);
         // Hit rate should be 2/(2+1) = 66.67%
@@ -92,7 +92,7 @@ describe('GET /api/metrics', () => {
     }));
     it('should return zero metrics when no data is available', () => __awaiter(void 0, void 0, void 0, function* () {
         // Clear all metrics
-        const metrics = (0, metricsController_1.getMetrics)();
+        const metrics = getMetrics();
         expect(metrics.api.averageResponseTime).toBe(0);
         expect(metrics.cache.hitRate).toBe(0);
         expect(metrics.websocket.connectedClients).toBe(0);
@@ -100,22 +100,22 @@ describe('GET /api/metrics', () => {
     it('should limit response times array to prevent memory issues', () => __awaiter(void 0, void 0, void 0, function* () {
         // Add more than 100 response times
         for (let i = 0; i < 110; i++) {
-            (0, metricsController_1.recordApiResponseTime)(i);
+            recordApiResponseTime(i);
         }
-        const response = yield (0, supertest_1.default)(app_1.default)
+        const response = yield request(app)
             .get('/api/metrics')
             .expect(200);
         // Should only keep the last 100
         expect(response.body.api.recentResponseTimes.length).toBeLessThanOrEqual(10);
     }));
     it('should handle WebSocket server not available gracefully', () => __awaiter(void 0, void 0, void 0, function* () {
-        const metrics = (0, metricsController_1.getMetrics)(undefined);
+        const metrics = getMetrics(undefined);
         expect(metrics.websocket.connectedClients).toBe(0);
         expect(metrics.websocket.responsiveClients).toBe(0);
         expect(metrics.websocket.totalSubscriptions).toBe(0);
     }));
     it('should return valid timestamp', () => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield (0, supertest_1.default)(app_1.default)
+        const response = yield request(app)
             .get('/api/metrics')
             .expect(200);
         const timestamp = new Date(response.body.timestamp);
@@ -124,11 +124,11 @@ describe('GET /api/metrics', () => {
     }));
     it('should handle errors gracefully', () => __awaiter(void 0, void 0, void 0, function* () {
         // Mock an error scenario by temporarily breaking the metrics function
-        const originalGetMetrics = metricsController_1.getMetrics;
+        const originalGetMetrics = getMetrics;
         global.getMetrics = () => {
             throw new Error('Test error');
         };
-        const response = yield (0, supertest_1.default)(app_1.default)
+        const response = yield request(app)
             .get('/api/metrics')
             .expect(500);
         expect(response.body).toHaveProperty('error');

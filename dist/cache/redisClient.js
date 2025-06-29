@@ -15,8 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setTokenCache = setTokenCache;
 exports.getTokenCache = getTokenCache;
 const ioredis_1 = __importDefault(require("ioredis"));
-// Use environment variables for Redis connection
+// Load Redis URL from environment variables
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+// Log after redisUrl is defined
+console.log('Connecting to Redis at:', redisUrl);
+// Initialize Redis client
 const redis = new ioredis_1.default(redisUrl, {
     maxRetriesPerRequest: 3,
 });
@@ -59,4 +62,3 @@ function getTokenCache(key) {
     });
 }
 exports.default = redis;
-//# sourceMappingURL=redisClient.js.map

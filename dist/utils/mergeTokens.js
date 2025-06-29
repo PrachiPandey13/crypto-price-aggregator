@@ -35,4 +35,3 @@ function mergeTokens(tokens) {
     }
     return Array.from(map.values());
 }
-//# sourceMappingURL=mergeTokens.js.map

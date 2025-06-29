@@ -40,4 +40,3 @@ function getTokens(req, res) {
         }
     });
 }
-//# sourceMappingURL=tokenController.js.map

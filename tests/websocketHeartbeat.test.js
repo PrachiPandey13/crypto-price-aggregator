@@ -5,9 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const socketServer_1 = require("../src/websocket/socketServer");
 const express_1 = __importDefault(require("express"));
+const io = require('socket.io-client');
+
 describe('WebSocket heartbeat system', () => {
     let httpServer;
     let socketServer;
+
     beforeAll((done) => {
         const app = (0, express_1.default)();
         httpServer = app.listen(0, () => {
@@ -15,9 +18,11 @@ describe('WebSocket heartbeat system', () => {
             done();
         });
     });
+
     afterAll(() => {
         httpServer.close();
     });
+
     it('initializes client heartbeat tracking on connection', () => {
         const mockSocket = {
             id: 'test-heartbeat-1',
@@ -31,6 +36,7 @@ describe('WebSocket heartbeat system', () => {
         expect(stats.totalClients).toBe(1);
         expect(stats.responsiveClients).toBe(1);
     });
+
     it('updates client heartbeat on pong response', () => {
         const mockSocket = {
             id: 'test-heartbeat-2',
@@ -49,6 +55,7 @@ describe('WebSocket heartbeat system', () => {
         const stats = socketServer.getHeartbeatStats();
         expect(stats.responsiveClients).toBe(1);
     });
+
     it('sends ping to responsive clients', () => {
         const mockSocket = {
             id: 'test-heartbeat-3',
@@ -65,6 +72,7 @@ describe('WebSocket heartbeat system', () => {
         // Verify ping was sent
         expect(mockSocket.emit).toHaveBeenCalledWith('ping');
     });
+
     it('disconnects unresponsive clients', () => {
         const mockSocket = {
             id: 'test-heartbeat-4',
@@ -87,6 +95,7 @@ describe('WebSocket heartbeat system', () => {
         // Verify disconnect was called
         expect(mockSocket.disconnect).toHaveBeenCalledWith(true);
     });
+
     it('provides heartbeat statistics', () => {
         const stats = socketServer.getHeartbeatStats();
         expect(stats).toHaveProperty('totalClients');
@@ -98,6 +107,7 @@ describe('WebSocket heartbeat system', () => {
         expect(typeof stats.unresponsiveClients).toBe('number');
         expect(typeof stats.averageResponseTime).toBe('number');
     });
+
     it('cleans up heartbeat tracking on disconnect', () => {
         const mockSocket = {
             id: 'test-heartbeat-5',
@@ -120,6 +130,7 @@ describe('WebSocket heartbeat system', () => {
         // Note: This test might need adjustment based on actual implementation
         // The disconnect handler should remove the client from tracking
     });
+
     it('includes heartbeat stats in subscription stats', () => {
         const subscriptionStats = socketServer.getSubscriptionStats();
         expect(subscriptionStats).toHaveProperty('totalSubscribers');
@@ -127,5 +138,23 @@ describe('WebSocket heartbeat system', () => {
         expect(subscriptionStats).toHaveProperty('responsiveClients');
         expect(typeof subscriptionStats.responsiveClients).toBe('number');
     });
+
+    it('should handle client disconnection during heartbeat', async () => {
+        const client = io('http://localhost:5000');
+        
+        await new Promise(resolve => client.on('connect', resolve));
+        
+        // Simulate client disconnection
+        client.disconnect();
+        
+        // Wait for heartbeat cycle
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify client is no longer tracked
+        const stats = socketServer.getHeartbeatStats();
+        expect(stats.totalClients).toBe(0);
+        
+        client.close();
+    }, 10000);
 });
 //# sourceMappingURL=websocketHeartbeat.test.js.map

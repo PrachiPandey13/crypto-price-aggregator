@@ -67,4 +67,3 @@ function filterSortPaginate(tokens, params) {
     const newNextCursor = paginated.length === params.limit ? paginated[paginated.length - 1].address : undefined;
     return { tokens: paginated, nextCursor: newNextCursor };
 }
-//# sourceMappingURL=filterSortPaginate.js.map
